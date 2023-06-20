@@ -19,6 +19,7 @@ import com.ayyub.liga.model.Team;
 import com.ayyub.liga.repository.StandingRepository;
 import com.ayyub.liga.repository.StatisticRepository;
 import com.ayyub.liga.repository.TeamRepository;
+import com.ayyub.liga.services.StandingService;
 
 @RestController
 @RequestMapping("/api/statistik")
@@ -66,14 +67,16 @@ public class StatisticController {
       
       List<Statistic> statistics = statisticRepository.findBySchedule(stats.getSchedule());
       if (!statistics.isEmpty()) {
-        boolean isMultipleSchedule;
+        boolean isMultipleSchedule = false;
         for (int i=0; i<statistics.size(); i++) {
           if (statistics.get(i).getHomeTeam() == stats.getHomeTeam() || statistics.get(i).getAwayTeam() == stats.getAwayTeam()) {
             isMultipleSchedule = true;
             break;
           }
         }
-        return new ResponseEntity<>("home_team atau away_team memilki schedule yang lain pada tanggal ini", HttpStatus.BAD_REQUEST);
+
+        if (isMultipleSchedule)
+          return new ResponseEntity<>("home_team atau away_team memilki schedule yang lain pada tanggal ini", HttpStatus.BAD_REQUEST);
       }
 
       Statistic _stats = statisticRepository.save(
@@ -107,14 +110,22 @@ public class StatisticController {
       }
 
       standTeamHome.setHomeGoal(standTeamHome.getHomeGoal() + stats.getStatistics().getHomeTeamGoal());
+      standTeamHome.setNumberOfMatch(standTeamHome.getNumberOfMatch() + 1);
       standTeamAway.setAwayGoal(standTeamAway.getAwayGoal() + stats.getStatistics().getAwayTeamGoal());
+      standTeamAway.setNumberOfMatch(standTeamAway.getNumberOfMatch() + 1);
 
-      standingRepository.save(standTeamHome);
-      standingRepository.save(standTeamAway);
+      List<Standing> standings = new ArrayList<Standing>();
+      standings.add(standTeamHome);
+      standings.add(standTeamAway);
+
+      standingRepository.saveAll(standings);
+
+      StandingService standingService = new StandingService(standingRepository);
+      standingService.reorderStanding();
       
       return new ResponseEntity<>(_stats, HttpStatus.CREATED);
     } catch (Exception e) {
-      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

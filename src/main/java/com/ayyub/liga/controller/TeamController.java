@@ -18,7 +18,7 @@ import com.ayyub.liga.repository.TeamRepository;
 import com.ayyub.liga.repository.StandingRepository;
 
 @RestController
-@RequestMapping("/api/teams")
+@RequestMapping("/api/tim")
 public class TeamController {
   
   @Autowired

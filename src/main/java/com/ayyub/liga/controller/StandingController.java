@@ -21,6 +21,7 @@ public class StandingController {
     try {
       List<Standing> standings = new ArrayList<Standing>();
       standingRepository.findAll().forEach(standings::add);
+      Collections.sort(standings, (curr, next) -> curr.getRank() - next.getRank());
       return new ResponseEntity<>(standings, HttpStatus.OK);
     } catch (Exception e) {
       return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
